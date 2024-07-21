@@ -8,12 +8,21 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use super::{audio::sfx::PlaySfx, movement::MovementController};
+use super::{audio::sfx::PlaySfx, movement::Dash};
 use crate::AppSet;
 
 pub(super) fn plugin(app: &mut App) {
     // Animate and play sound effects based on controls.
-    app.register_type::<PlayerAnimation>();
+    app.register_type::<(PlayerAnimation, TranslationHistory)>();
+    app.add_systems(
+        PreUpdate,
+        (
+            remove_translation_history,
+            add_translation_history,
+            record_translation_history,
+        )
+            .chain(),
+    );
     app.add_systems(
         Update,
         (
@@ -29,17 +38,65 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct TranslationHistory {
+    pub previous: Vec3,
+    pub delta: Vec3,
+}
+
+impl TranslationHistory {
+    fn update(&mut self, new: Vec3) {
+        self.delta = new - self.previous;
+        self.previous = new;
+    }
+}
+
+fn record_translation_history(mut transform_query: Query<(&Transform, &mut TranslationHistory)>) {
+    for (transform, mut previous_translation) in &mut transform_query {
+        previous_translation.update(transform.translation);
+    }
+}
+
+fn add_translation_history(
+    transform_query: Query<(Entity, &Transform), Without<TranslationHistory>>,
+    mut commands: Commands,
+) {
+    for (entity, transform) in &transform_query {
+        commands.entity(entity).insert(TranslationHistory {
+            previous: transform.translation,
+            delta: default(),
+        });
+    }
+}
+
+fn remove_translation_history(
+    transform_query: Query<Entity, (With<TranslationHistory>, Without<Transform>)>,
+    mut commands: Commands,
+) {
+    for entity in &transform_query {
+        commands.entity(entity).remove::<TranslationHistory>();
+    }
+}
+
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
-    mut player_query: Query<(&MovementController, &mut Sprite, &mut PlayerAnimation)>,
+    mut player_query: Query<(
+        &TranslationHistory,
+        &mut Sprite,
+        &mut PlayerAnimation,
+        Option<&Dash>,
+    )>,
 ) {
-    for (controller, mut sprite, mut animation) in &mut player_query {
-        let dx = controller.0.x;
+    for (history, mut sprite, mut animation, dash) in &mut player_query {
+        let dx = history.delta.x;
         if dx != 0.0 {
             sprite.flip_x = dx < 0.0;
         }
 
-        let animation_state = if controller.0 == Vec2::ZERO {
+        let animation_state = if dash.is_some() {
+            PlayerAnimationState::Dashing
+        } else if history.delta.truncate() == Vec2::ZERO {
             PlayerAnimationState::Idling
         } else {
             PlayerAnimationState::Walking
@@ -90,6 +147,7 @@ pub struct PlayerAnimation {
 pub enum PlayerAnimationState {
     Idling,
     Walking,
+    Dashing,
 }
 
 impl PlayerAnimation {
@@ -113,9 +171,49 @@ impl PlayerAnimation {
 
     fn walking() -> Self {
         Self {
-            timer: Timer::new(Self::WALKING_INTERVAL, TimerMode::Repeating),
+            timer: Self::walking_timer(),
             frame: 0,
             state: PlayerAnimationState::Walking,
+        }
+    }
+
+    fn dashing() -> Self {
+        Self {
+            timer: Self::dashing_timer(),
+            frame: 0,
+            state: PlayerAnimationState::Dashing,
+        }
+    }
+
+    fn walking_timer() -> Timer {
+        Timer::new(Self::WALKING_INTERVAL, TimerMode::Repeating)
+    }
+
+    fn dashing_timer() -> Timer {
+        let mut timer = Self::walking_timer();
+        timer.pause();
+        timer
+    }
+
+    fn to_walking(&mut self) {
+        match self.state {
+            PlayerAnimationState::Idling => *self = Self::walking(),
+            PlayerAnimationState::Walking => {}
+            PlayerAnimationState::Dashing => {
+                self.timer.unpause();
+                self.state = PlayerAnimationState::Walking;
+            }
+        }
+    }
+
+    fn to_dashing(&mut self) {
+        match self.state {
+            PlayerAnimationState::Idling => *self = Self::dashing(),
+            PlayerAnimationState::Walking => {
+                self.timer.pause();
+                self.state = PlayerAnimationState::Dashing;
+            }
+            PlayerAnimationState::Dashing => {}
         }
     }
 
@@ -133,6 +231,7 @@ impl PlayerAnimation {
             % match self.state {
                 PlayerAnimationState::Idling => Self::IDLE_FRAMES,
                 PlayerAnimationState::Walking => Self::WALKING_FRAMES,
+                PlayerAnimationState::Dashing => Self::WALKING_FRAMES,
             };
     }
 
@@ -141,7 +240,8 @@ impl PlayerAnimation {
         if self.state != state {
             match state {
                 PlayerAnimationState::Idling => *self = Self::idling(),
-                PlayerAnimationState::Walking => *self = Self::walking(),
+                PlayerAnimationState::Walking => self.to_walking(),
+                PlayerAnimationState::Dashing => self.to_dashing(),
             }
         }
     }
@@ -155,7 +255,7 @@ impl PlayerAnimation {
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
             PlayerAnimationState::Idling => self.frame,
-            PlayerAnimationState::Walking => 6 + self.frame,
+            PlayerAnimationState::Walking | PlayerAnimationState::Dashing => 6 + self.frame,
         }
     }
 }

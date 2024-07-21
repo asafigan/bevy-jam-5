@@ -1,12 +1,14 @@
 //! Spawn the player.
 
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::{
     game::{
         animation::PlayerAnimation,
         assets::{HandleMap, ImageKey},
-        movement::{Movement, MovementController, WrapWithinWindow},
+        movement::{DashSettings, MovementController, MovementSettings, WrapWithinWindow},
     },
     screen::Screen,
 };
@@ -37,6 +39,7 @@ fn spawn_player(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new();
 
+    let base_speed = 420.0;
     commands.spawn((
         Name::new("Player"),
         Player,
@@ -50,7 +53,14 @@ fn spawn_player(
             index: player_animation.get_atlas_index(),
         },
         MovementController::default(),
-        Movement { speed: 420.0 },
+        MovementSettings {
+            max_speed: base_speed,
+        },
+        DashSettings {
+            intent_window: Duration::from_millis(100),
+            distance: base_speed,
+            time: Duration::from_millis(250),
+        },
         WrapWithinWindow,
         player_animation,
         StateScoped(Screen::Playing),
