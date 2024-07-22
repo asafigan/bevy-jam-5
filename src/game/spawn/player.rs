@@ -3,6 +3,7 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::{
     game::{
@@ -40,12 +41,16 @@ fn spawn_player(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new();
 
-    let base_speed = 420.0;
+    let base_speed = 800.0;
     commands
         .spawn((
             Name::new("Player"),
             Player,
             SpriteBundle {
+                sprite: Sprite {
+                    anchor: bevy::sprite::Anchor::Custom(Vec2::new(0.0, -0.1)),
+                    ..default()
+                },
                 texture: image_handles[&ImageKey::Ducky].clone_weak(),
                 transform: Transform::from_scale(Vec2::splat(8.0).extend(1.0)),
                 ..Default::default()
@@ -65,6 +70,10 @@ fn spawn_player(
             },
             WrapWithinWindow,
             player_animation,
+            RigidBody::KinematicPositionBased,
+            Collider::round_cuboid(6.0, 8.0, 50.0),
+            ActiveEvents::COLLISION_EVENTS,
+            ActiveCollisionTypes::all(),
             StateScoped(Screen::Playing),
         ))
         .observe(|trigger: Trigger<SpawnedGhost>, mut commands: Commands| {

@@ -7,6 +7,7 @@ pub mod assets;
 pub mod audio;
 mod ghost;
 mod movement;
+mod plant;
 pub mod spawn;
 
 pub(super) fn plugin(app: &mut App) {
@@ -17,5 +18,6 @@ pub(super) fn plugin(app: &mut App) {
         ghost::plugin,
         movement::plugin,
         spawn::plugin,
+        plant::plugin,
     ));
 }

@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.14", features = ["wayland"] }
+bevy_rapier2d = { version = "0.27" }
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [
     "max_level_debug",
@@ -22,6 +23,7 @@ dev = [
     # Improve compile times for dev builds by linking Bevy as a dynamic library.
     "bevy/dynamic_linking",
     "bevy/bevy_dev_tools",
+    "bevy_rapier2d/debug-render-2d"
 ]
 dev_native = [
     "dev",

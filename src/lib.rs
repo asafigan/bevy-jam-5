@@ -9,6 +9,10 @@ use bevy::{
     audio::{AudioPlugin, Volume},
     prelude::*,
 };
+use bevy_rapier2d::{
+    plugin::{NoUserData, RapierPhysicsPlugin},
+    render::RapierDebugRenderPlugin,
+};
 
 pub struct AppPlugin;
 
@@ -24,7 +28,7 @@ impl Plugin for AppPlugin {
         app.add_systems(Startup, spawn_camera);
 
         // Add Bevy plugins.
-        app.add_plugins(
+        app.add_plugins((
             DefaultPlugins
                 .set(AssetPlugin {
                     // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -50,14 +54,15 @@ impl Plugin for AppPlugin {
                     },
                     ..default()
                 }),
-        );
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+        ));
 
         // Add other plugins.
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));
 
         // Enable dev tools for dev builds.
         #[cfg(feature = "dev")]
-        app.add_plugins(dev_tools::plugin);
+        app.add_plugins((dev_tools::plugin, RapierDebugRenderPlugin::default()));
     }
 }
 
@@ -77,7 +82,15 @@ enum AppSet {
 fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
-        Camera2dBundle::default(),
+        Camera2dBundle {
+            projection: OrthographicProjection {
+                far: 1000.0,
+                near: -1000.0,
+                scale: 5.0,
+                ..default()
+            },
+            ..default()
+        },
         // Render all UI to this camera.
         // Not strictly necessary since we only use one camera,
         // but if we don't use this component, our UI will disappear as soon

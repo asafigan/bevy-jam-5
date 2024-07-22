@@ -197,9 +197,12 @@ pub struct WrapWithinWindow;
 
 fn wrap_within_window(
     window_query: Query<&Window, With<PrimaryWindow>>,
+    cameras: Query<&OrthographicProjection, With<Camera>>,
     mut wrap_query: Query<&mut Transform, With<WrapWithinWindow>>,
 ) {
-    let size = window_query.single().size() + 256.0;
+    let mut size = window_query.single().size();
+    size *= cameras.single().scale;
+    size += 256.0;
     let half_size = size / 2.0;
     for mut transform in &mut wrap_query {
         let position = transform.translation.xy();
