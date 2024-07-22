@@ -25,7 +25,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            start_dash,
+            start_dash.before(GhostSet::Update),
             apply_movement,
             apply_dash.after(GhostSet::Update),
             stop_dash,

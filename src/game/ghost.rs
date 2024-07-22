@@ -34,9 +34,15 @@ pub struct Ghost {
     timer: Timer,
 }
 
+#[derive(Event)]
+pub struct SpawnedGhost {
+    pub ghost: Entity,
+}
+
 fn spawn_ghosts(
     time: Res<Time>,
     mut spawners: Query<(
+        Entity,
         &mut GhostSpawner,
         &GlobalTransform,
         &Sprite,
@@ -45,12 +51,12 @@ fn spawn_ghosts(
     )>,
     mut commands: Commands,
 ) {
-    for (mut spawner, global_transform, sprite, image, texture_atlas) in &mut spawners {
+    for (entity, mut spawner, global_transform, sprite, image, texture_atlas) in &mut spawners {
         spawner.timer.tick(time.delta());
         if spawner.timer.just_finished() {
             let mut transform = Transform::from(*global_transform);
             transform.translation.z -= 0.01;
-            let mut entity = commands.spawn((
+            let mut ghost = commands.spawn((
                 Ghost {
                     starting_color: sprite.color.clone(),
                     timer: Timer::new(spawner.ghost_duration, TimerMode::Once),
@@ -64,8 +70,10 @@ fn spawn_ghosts(
             ));
 
             if let Some(texture_atlas) = texture_atlas {
-                entity.insert(texture_atlas.clone());
+                ghost.insert(texture_atlas.clone());
             }
+            let ghost = ghost.id();
+            commands.trigger_targets(SpawnedGhost { ghost }, entity);
         }
     }
 }
