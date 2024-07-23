@@ -5,6 +5,7 @@ use bevy::prelude::*;
 mod animation;
 pub mod assets;
 pub mod audio;
+mod enemies;
 mod ghost;
 mod movement;
 mod plant;
@@ -19,5 +20,6 @@ pub(super) fn plugin(app: &mut App) {
         movement::plugin,
         spawn::plugin,
         plant::plugin,
+        enemies::plugin,
     ));
 }

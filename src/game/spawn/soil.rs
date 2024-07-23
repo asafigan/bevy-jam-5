@@ -21,12 +21,11 @@ fn spawn_soil(trigger: Trigger<SpawnSoil>, mut commands: Commands) {
                 ..default()
             },
             transform: Transform::from_scale(Vec2::splat(200.0).extend(1.0))
-                .with_translation(trigger.event().position.extend(-0.1)),
+                .with_translation(trigger.event().position.extend(-0.2)),
             ..default()
         },
         Collider::cuboid(0.5, 0.5),
         Sensor,
-        ActiveCollisionTypes::all(),
         StateScoped(Screen::Playing),
     ));
 }

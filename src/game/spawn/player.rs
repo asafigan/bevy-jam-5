@@ -27,6 +27,8 @@ pub struct SpawnPlayer;
 #[reflect(Component)]
 pub struct Player;
 
+pub const PLAYER_BASE_SPEED: f32 = 800.0;
+
 fn spawn_player(
     _trigger: Trigger<SpawnPlayer>,
     mut commands: Commands,
@@ -41,7 +43,7 @@ fn spawn_player(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new();
 
-    let base_speed = 800.0;
+    let base_speed = PLAYER_BASE_SPEED;
     commands
         .spawn((
             Name::new("Player"),

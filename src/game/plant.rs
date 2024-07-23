@@ -6,7 +6,7 @@ use bevy::{
 };
 use bevy_rapier2d::pipeline::CollisionEvent;
 
-use super::spawn::player::Player;
+use super::spawn::{enemy::SpawnEnemy, player::Player};
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Update, (trigger_seed_events, growth).chain());
@@ -106,12 +106,15 @@ fn growth(
 fn finish_growing(
     trigger: Trigger<FinishedGrowing>,
     parents: Query<&Parent>,
-    mut soil: Query<&mut Soil>,
+    mut soil: Query<(&mut Soil, &GlobalTransform)>,
     mut commands: Commands,
 ) {
     if let Ok(parent) = parents.get(trigger.entity()) {
-        if let Ok(mut soil) = soil.get_mut(parent.get()) {
+        if let Ok((mut soil, global_transform)) = soil.get_mut(parent.get()) {
             soil.plant = None;
+            commands.trigger(SpawnEnemy {
+                position: global_transform.translation().truncate(),
+            });
         }
     }
     commands.entity(trigger.entity()).despawn_recursive();
