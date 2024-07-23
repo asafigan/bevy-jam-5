@@ -9,6 +9,8 @@ use crate::{
     game::{
         animation::PlayerAnimation,
         assets::{HandleMap, ImageKey},
+        bullets::BulletSpawner,
+        collision_groups::{BULLET_GROUP, ENEMY_GROUP, PLAYER_GROUP},
         ghost::SpawnedGhost,
         movement::{DashSettings, MovementController, MovementSettings, WrapWithinWindow},
     },
@@ -76,8 +78,22 @@ fn spawn_player(
             Collider::round_cuboid(6.0, 8.0, 50.0),
             ActiveEvents::COLLISION_EVENTS,
             ActiveCollisionTypes::all(),
+            BulletSpawner {
+                bullet_damage: 1.0,
+                bullet_speed: 2000.0,
+                timer: Timer::new(Duration::from_millis(100), TimerMode::Repeating),
+                bullet_time_to_live: Duration::from_secs(5),
+                collision_groups: CollisionGroups {
+                    memberships: BULLET_GROUP,
+                    filters: ENEMY_GROUP,
+                },
+            },
             StateScoped(Screen::Playing),
         ))
+        .insert(CollisionGroups {
+            memberships: PLAYER_GROUP,
+            filters: Group::all(),
+        })
         .observe(|trigger: Trigger<SpawnedGhost>, mut commands: Commands| {
             commands
                 .entity(trigger.event().ghost)

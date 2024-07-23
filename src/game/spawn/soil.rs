@@ -1,4 +1,7 @@
-use crate::{game::plant::Soil, screen::Screen};
+use crate::{
+    game::{collision_groups::PLAYER_GROUP, plant::Soil},
+    screen::Screen,
+};
 use bevy::{color::palettes::css::BROWN, prelude::*};
 use bevy_rapier2d::prelude::*;
 
@@ -26,6 +29,10 @@ fn spawn_soil(trigger: Trigger<SpawnSoil>, mut commands: Commands) {
         },
         Collider::cuboid(0.5, 0.5),
         Sensor,
+        CollisionGroups {
+            memberships: Group::all(),
+            filters: PLAYER_GROUP,
+        },
         StateScoped(Screen::Playing),
     ));
 }

@@ -2,7 +2,9 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    game::{enemies::Enemy, movement::WrapWithinWindow},
+    game::{
+        collision_groups::ENEMY_GROUP, enemies::Enemy, health::Health, movement::WrapWithinWindow,
+    },
     screen::Screen,
 };
 
@@ -23,6 +25,7 @@ fn spawn_enemey(trigger: Trigger<SpawnEnemy>, mut commands: Commands) {
         Enemy {
             max_speed: PLAYER_BASE_SPEED,
         },
+        Health::full(2.0),
         SpriteBundle {
             sprite: Sprite {
                 color: WHITE.into(),
@@ -35,6 +38,10 @@ fn spawn_enemey(trigger: Trigger<SpawnEnemy>, mut commands: Commands) {
         WrapWithinWindow,
         Collider::cuboid(0.5, 0.5),
         RigidBody::KinematicPositionBased,
+        CollisionGroups {
+            memberships: ENEMY_GROUP,
+            filters: Group::all(),
+        },
         StateScoped(Screen::Playing),
     ));
 }

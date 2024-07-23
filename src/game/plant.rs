@@ -26,9 +26,7 @@ struct Plant {
 }
 
 #[derive(Event)]
-struct PlantSeed {
-    player: Entity,
-}
+struct PlantSeed;
 
 fn trigger_seed_events(
     mut events: EventReader<CollisionEvent>,
@@ -37,23 +35,20 @@ fn trigger_seed_events(
     mut commands: Commands,
 ) {
     for event in events.read() {
-        match *event {
-            CollisionEvent::Started(a, b, _) => {
-                let (player, entity) = if players.contains(a) {
-                    (a, b)
-                } else if players.contains(b) {
-                    (b, a)
-                } else {
-                    continue;
-                };
+        if let CollisionEvent::Started(a, b, _) = *event {
+            let (_player, entity) = if players.contains(a) {
+                (a, b)
+            } else if players.contains(b) {
+                (b, a)
+            } else {
+                continue;
+            };
 
-                if !soil.contains(entity) {
-                    continue;
-                };
+            if !soil.contains(entity) {
+                continue;
+            };
 
-                commands.trigger_targets(PlantSeed { player }, entity);
-            }
-            _ => {}
+            commands.trigger_targets(PlantSeed, entity);
         }
     }
 }
@@ -75,7 +70,7 @@ fn plant_seed(trigger: Trigger<PlantSeed>, mut soil: Query<&mut Soil>, mut comma
                 ..default()
             },
             Plant {
-                growth_timer: Timer::new(Duration::from_secs(10), TimerMode::Once),
+                growth_timer: Timer::new(Duration::from_secs(1), TimerMode::Once),
             },
         ))
         .set_parent(trigger.entity())

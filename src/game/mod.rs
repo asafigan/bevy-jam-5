@@ -5,8 +5,11 @@ use bevy::prelude::*;
 mod animation;
 pub mod assets;
 pub mod audio;
+mod bullets;
+pub mod collision_groups;
 mod enemies;
 mod ghost;
+pub mod health;
 mod movement;
 mod plant;
 pub mod spawn;
@@ -21,5 +24,7 @@ pub(super) fn plugin(app: &mut App) {
         spawn::plugin,
         plant::plugin,
         enemies::plugin,
+        bullets::plugin,
+        health::plugin,
     ));
 }

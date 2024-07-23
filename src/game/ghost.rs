@@ -58,7 +58,7 @@ fn spawn_ghosts(
             transform.translation.z -= 0.01;
             let mut ghost = commands.spawn((
                 Ghost {
-                    starting_color: sprite.color.clone(),
+                    starting_color: sprite.color,
                     timer: Timer::new(spawner.ghost_duration, TimerMode::Once),
                 },
                 SpriteBundle {
