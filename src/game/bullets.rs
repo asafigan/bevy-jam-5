@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::css::WHITE, prelude::*, render::mesh::CircleMeshBuilder, sprite::Mesh2dHandle,
+};
 use bevy_rapier2d::prelude::*;
 
 use crate::screen::Screen;
@@ -8,8 +10,8 @@ use crate::screen::Screen;
 use super::health::Damage;
 
 pub(super) fn plugin(app: &mut App) {
-    app.register_type::<(Bullet, BulletSpawner)>();
     app.observe(spawn_bullet);
+    app.add_systems(Startup, init_bullet_assets);
     app.add_systems(
         Update,
         (fire_bullets, hit_test_bullets, move_bullets).chain(),
@@ -17,12 +19,29 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(PreUpdate, time_to_live);
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
+#[derive(Resource)]
+struct BulletAssets {
+    mesh: Mesh2dHandle,
+    material: Handle<ColorMaterial>,
+}
+
+fn init_bullet_assets(
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut color_materials: ResMut<Assets<ColorMaterial>>,
+    mut commands: Commands,
+) {
+    commands.insert_resource(BulletAssets {
+        mesh: Mesh2dHandle(meshes.add(CircleMeshBuilder::new(1.0, 100).build())),
+        material: color_materials.add(ColorMaterial::from_color(WHITE)),
+    });
+}
+
+#[derive(Component)]
 struct Bullet {
     damage: f32,
     velocity: Vec2,
     collision_groups: CollisionGroups,
+    collider: Collider,
 }
 
 #[derive(Component, Reflect)]
@@ -31,11 +50,11 @@ struct TimeToLive {
     timer: Timer,
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
+#[derive(Component)]
 pub struct BulletSpawner {
     pub bullet_damage: f32,
     pub bullet_speed: f32,
+    pub bullet_radius: f32,
     pub bullet_time_to_live: Duration,
     pub timer: Timer,
     pub collision_groups: CollisionGroups,
@@ -49,20 +68,29 @@ pub struct SpawnBullet {
     pub speed: f32,
     pub time_to_live: Duration,
     pub collision_groups: CollisionGroups,
+    pub radius: f32,
 }
 
-fn spawn_bullet(trigger: Trigger<SpawnBullet>, mut commands: Commands) {
+fn spawn_bullet(
+    trigger: Trigger<SpawnBullet>,
+    bullet_assets: Res<BulletAssets>,
+    mut commands: Commands,
+) {
+    let diameter = trigger.event().radius * 2.0;
     commands.spawn((
         Bullet {
             damage: trigger.event().damage,
             velocity: trigger.event().direction * trigger.event().speed,
             collision_groups: trigger.event().collision_groups,
+            collider: Collider::ball(trigger.event().radius),
         },
         TimeToLive {
             timer: Timer::new(trigger.event().time_to_live, TimerMode::Once),
         },
-        SpriteBundle {
-            transform: Transform::from_scale(Vec3::new(50.0, 50.0, 1.0))
+        ColorMesh2dBundle {
+            mesh: bullet_assets.mesh.clone(),
+            material: bullet_assets.material.clone(),
+            transform: Transform::from_scale(Vec3::new(diameter, diameter, 1.0))
                 .with_translation(trigger.event().position.extend(0.1)),
             ..default()
         },
@@ -92,6 +120,7 @@ fn fire_bullets(
                     speed: spawner.bullet_speed,
                     time_to_live: spawner.bullet_time_to_live,
                     collision_groups: spawner.collision_groups,
+                    radius: spawner.bullet_radius.clone(),
                 });
             }
         }
@@ -106,11 +135,19 @@ fn hit_test_bullets(
 ) {
     for (entity, global_transform, bullet) in &bullets {
         let position = global_transform.translation.truncate();
-        if let Some((hit_entity, _toi)) = rapier_context.cast_ray(
+        let rotation = 0.0; // rotation in radians
+        let options = ShapeCastOptions {
+            max_time_of_impact: bullet.velocity.length() * time.delta_seconds(),
+            target_distance: 0.0,
+            stop_at_penetration: true,
+            compute_impact_geometry_on_penetration: false,
+        };
+        if let Some((hit_entity, _toi)) = rapier_context.cast_shape(
             position,
+            rotation,
             bullet.velocity.normalize(),
-            bullet.velocity.length() * time.delta_seconds(),
-            true,
+            &bullet.collider,
+            options,
             bullet.collision_groups.into(),
         ) {
             commands.entity(entity).despawn_recursive();

@@ -3,7 +3,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     game::{
-        collision_groups::ENEMY_GROUP, enemies::Enemy, health::Health, movement::WrapWithinWindow,
+        collision_groups::{ENEMY_GROUP, HIT_BOX_GROUP},
+        enemies::Enemy,
+        health::Health,
+        movement::WrapWithinWindow,
     },
     screen::Screen,
 };
@@ -40,7 +43,7 @@ fn spawn_enemey(trigger: Trigger<SpawnEnemy>, mut commands: Commands) {
         RigidBody::KinematicPositionBased,
         CollisionGroups {
             memberships: ENEMY_GROUP,
-            filters: Group::all(),
+            filters: HIT_BOX_GROUP,
         },
         StateScoped(Screen::Playing),
     ));
