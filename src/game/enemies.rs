@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
-use super::spawn::player::Player;
+use super::{health::Died, items::SpawnItem, spawn::player::Player};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Enemy>();
+    app.observe(kill_enemy);
     app.add_systems(Update, follow_player);
 }
 
@@ -28,5 +29,19 @@ fn follow_player(
                 transform.translation += displacement.extend(0.0);
             }
         }
+    }
+}
+
+fn kill_enemy(
+    trigger: Trigger<Died>,
+    enemies: Query<&GlobalTransform, With<Enemy>>,
+    mut commands: Commands,
+) {
+    if let Ok(transform) = enemies.get(trigger.entity()) {
+        commands.trigger(SpawnItem {
+            position: transform.translation().truncate(),
+        });
+
+        commands.entity(trigger.entity()).despawn_recursive();
     }
 }

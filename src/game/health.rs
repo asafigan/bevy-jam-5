@@ -23,6 +23,9 @@ pub struct Damage {
     pub amount: f32,
 }
 
+#[derive(Event)]
+pub struct Died;
+
 fn damage(
     trigger: Trigger<Damage>,
     mut health: Query<(Entity, &mut Health)>,
@@ -31,7 +34,7 @@ fn damage(
     if let Ok((entity, mut health)) = health.get_mut(trigger.entity()) {
         health.current -= trigger.event().amount;
         if health.current <= 0.0 {
-            commands.entity(entity).despawn_recursive();
+            commands.trigger_targets(Died, entity);
         }
     }
 }

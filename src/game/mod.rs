@@ -10,6 +10,7 @@ pub mod collision_groups;
 mod enemies;
 mod ghost;
 pub mod health;
+mod items;
 mod movement;
 mod plant;
 pub mod spawn;
@@ -26,5 +27,6 @@ pub(super) fn plugin(app: &mut App) {
         enemies::plugin,
         bullets::plugin,
         health::plugin,
+        items::plugin,
     ));
 }
