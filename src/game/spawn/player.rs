@@ -12,6 +12,7 @@ use crate::{
         bullets::BulletSpawner,
         collision_groups::{ENEMY_GROUP, HIT_BOX_GROUP, PLAYER_GROUP},
         ghost::SpawnedGhost,
+        layers,
         movement::{DashSettings, MovementController, MovementSettings, WrapWithinWindow},
     },
     screen::Screen,
@@ -56,7 +57,8 @@ fn spawn_player(
                     ..default()
                 },
                 texture: image_handles[&ImageKey::Ducky].clone_weak(),
-                transform: Transform::from_scale(Vec2::splat(8.0).extend(1.0)),
+                transform: Transform::from_scale(Vec2::splat(8.0).extend(1.0))
+                    .with_translation(Vec2::ZERO.extend(layers::PLAYER)),
                 ..Default::default()
             },
             TextureAtlas {
@@ -76,19 +78,6 @@ fn spawn_player(
             player_animation,
             RigidBody::KinematicPositionBased,
             Collider::round_cuboid(6.0, 8.0, 50.0),
-            ActiveEvents::COLLISION_EVENTS,
-            ActiveCollisionTypes::all(),
-            BulletSpawner {
-                bullet_damage: 1.0,
-                bullet_speed: 2000.0,
-                timer: Timer::new(Duration::from_millis(100), TimerMode::Repeating),
-                bullet_time_to_live: Duration::from_secs(5),
-                bullet_radius: 25.0,
-                collision_groups: CollisionGroups {
-                    memberships: HIT_BOX_GROUP,
-                    filters: ENEMY_GROUP,
-                },
-            },
             StateScoped(Screen::Playing),
         ))
         .insert(CollisionGroups {

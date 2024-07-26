@@ -11,9 +11,11 @@ mod enemies;
 mod ghost;
 pub mod health;
 mod items;
+pub mod layers;
 mod movement;
 mod plant;
 pub mod spawn;
+mod tools;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -28,5 +30,6 @@ pub(super) fn plugin(app: &mut App) {
         bullets::plugin,
         health::plugin,
         items::plugin,
+        tools::plugin,
     ));
 }

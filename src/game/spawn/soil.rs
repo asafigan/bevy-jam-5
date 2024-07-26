@@ -1,5 +1,5 @@
 use crate::{
-    game::{collision_groups::PLAYER_GROUP, plant::Soil},
+    game::{collision_groups::SOIL_GROUP, layers, plant::Soil},
     screen::Screen,
 };
 use bevy::{color::palettes::css::BROWN, prelude::*};
@@ -24,14 +24,16 @@ fn spawn_soil(trigger: Trigger<SpawnSoil>, mut commands: Commands) {
                 ..default()
             },
             transform: Transform::from_scale(Vec2::splat(200.0).extend(1.0))
-                .with_translation(trigger.event().position.extend(-0.2)),
+                .with_translation(trigger.event().position.extend(layers::SOIL)),
             ..default()
         },
         Collider::cuboid(0.5, 0.5),
-        Sensor,
+        RigidBody::KinematicPositionBased,
+        ActiveEvents::COLLISION_EVENTS,
+        ActiveCollisionTypes::all(),
         CollisionGroups {
-            memberships: Group::all(),
-            filters: PLAYER_GROUP,
+            memberships: SOIL_GROUP,
+            filters: Group::all(),
         },
         StateScoped(Screen::Playing),
     ));

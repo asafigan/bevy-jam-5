@@ -7,7 +7,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::screen::Screen;
 
-use super::health::Damage;
+use super::{health::Damage, layers};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_bullet);
@@ -91,7 +91,7 @@ fn spawn_bullet(
             mesh: bullet_assets.mesh.clone(),
             material: bullet_assets.material.clone(),
             transform: Transform::from_scale(Vec3::new(diameter, diameter, 1.0))
-                .with_translation(trigger.event().position.extend(0.1)),
+                .with_translation(trigger.event().position.extend(layers::BULLETS)),
             ..default()
         },
         StateScoped(Screen::Playing),

@@ -6,6 +6,7 @@ use crate::{
         collision_groups::{ENEMY_GROUP, HIT_BOX_GROUP},
         enemies::Enemy,
         health::Health,
+        layers,
         movement::WrapWithinWindow,
     },
     screen::Screen,
@@ -35,7 +36,7 @@ fn spawn_enemey(trigger: Trigger<SpawnEnemy>, mut commands: Commands) {
                 ..default()
             },
             transform: Transform::from_scale(Vec2::splat(150.0).extend(1.0))
-                .with_translation(trigger.event().position.extend(-0.1)),
+                .with_translation(trigger.event().position.extend(layers::ENEMIES)),
             ..default()
         },
         WrapWithinWindow,
