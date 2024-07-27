@@ -1,3 +1,4 @@
+use bevy::a11y::accesskit::TextSelection;
 use bevy::color::palettes::css::WHITE;
 use bevy::{color::palettes::css::YELLOW, prelude::*};
 
@@ -143,7 +144,7 @@ pub struct WalletDisplay;
 
 fn update_wallet_display(wallet: Res<Wallet>, mut displays: Query<&mut Text, With<WalletDisplay>>) {
     for mut text in &mut displays {
-        text.sections[0].value = wallet.amount.to_string();
+        text.sections[1].value = wallet.amount.to_string();
     }
 }
 
@@ -168,14 +169,24 @@ fn setup_wallet_display(mut commands: Commands) {
         .with_children(|children| {
             children.spawn((
                 TextBundle {
-                    text: Text::from_section(
-                        "0",
-                        TextStyle {
-                            font: default(),
-                            font_size: 100.0,
-                            color: WHITE.into(),
-                        },
-                    ),
+                    text: Text::from_sections([
+                        TextSection::new(
+                            "$",
+                            TextStyle {
+                                font: default(),
+                                font_size: 100.0,
+                                color: WHITE.into(),
+                            },
+                        ),
+                        TextSection::new(
+                            "0",
+                            TextStyle {
+                                font: default(),
+                                font_size: 100.0,
+                                color: WHITE.into(),
+                            },
+                        ),
+                    ]),
                     ..default()
                 },
                 WalletDisplay,
